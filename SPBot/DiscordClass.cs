@@ -1,0 +1,135 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Discord.WebSocket;
+using Beautiplayer;
+using Discord;
+using System.Diagnostics;
+using Discord.Audio;
+using Discord.Commands;
+
+namespace SPBot
+{
+    public class DiscordClass : ModuleBase
+    {
+        private AudioPlayer Player;
+        private DiscordSocketClient Client;
+        private CommandService Commands;
+        private DependencyMap Map;
+
+        public DiscordClass(DependencyMap MyMap)
+        {
+            Client = new DiscordSocketClient();
+            Player = MyMap.Get<AudioPlayer>();
+            Commands = new CommandService();
+            Map = MyMap;
+        }
+
+        public async Task MainAsync()
+        {
+            Client.MessageReceived += Client_MessageReceived;
+            Player.SendMessage_Raised += Player_SendMessage_Raised;
+            Client.Connected += Client_Connected;
+            Client.GuildAvailable += Client_GuildAvailable;
+            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+            await Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
+            string token = "";
+            await Client.LoginAsync(TokenType.Bot, token);
+            await Client.StartAsync();
+            await Task.Delay(-1);
+        }
+
+        private void Player_SendMessage_Raised(string Message)
+        {
+            IMessageChannel x = Client.GetChannel(284040882796101632) as IMessageChannel;
+            x.SendMessageAsync(Message);
+        }
+
+        private async Task Client_GuildAvailable(SocketGuild arg)
+        {
+            await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("I'm All Fired Up!");
+        }
+
+        private void CurrentDomain_ProcessExit(object sender, EventArgs e)
+        {
+            Client.LogoutAsync();
+        }
+
+        private async Task Client_Connected()
+        {
+            await Client.SetGameAsync("+help");
+        }
+
+        private async Task Client_MessageReceived(SocketMessage arg)
+        {
+            var message = arg as SocketUserMessage;
+            int prefix = 0;
+            if (message.HasCharPrefix('+', ref prefix) && message.Channel.Name.ToLower().Contains("bot"))
+            {
+                var context = new CommandContext(Client, message);
+                var result = await Commands.ExecuteAsync(context, prefix, Map);
+                if (!result.IsSuccess)
+                    await context.Channel.SendMessageAsync(result.ErrorReason);
+
+            }
+        }
+
+        [Command("Help", RunMode = RunMode.Async)]
+        public async Task Help()
+        {
+            var DMToUserObject = await Context.User.CreateDMChannelAsync();
+            await DMToUserObject.SendMessageAsync(Statics.HelpMessages());
+        }
+
+        [Command("Play", RunMode = RunMode.Async)]
+        public async Task Play(string Text)
+        {
+            string PlayAudio = Player.DoPlay(Text);
+            if (PlayAudio != "")
+            {
+                IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
+                var IsInVoiceChannel = await channel.GetUserAsync(Context.Client.CurrentUser.Id);
+                if (IsInVoiceChannel == null || Player.DiscordOutStream == null)
+                {
+                    IAudioClient audioClient = await channel.ConnectAsync();
+                    Player.EngageOutStream(audioClient);
+                }
+                if (PlayAudio == "MOVE")
+                {
+                    YoutubeExtractor.VideoInfo Vid = await Player.GetNext();
+                    PlayAudio = "Now Playing On SpagBot: " + Vid.Title;
+                    await Context.Channel.SendMessageAsync(PlayAudio);
+                    await Player.PlayNext();
+                    return;
+                }
+                else if (PlayAudio == "QUEUE")
+                {
+                    YoutubeExtractor.VideoInfo Vid = await Player.GetNext();
+                    PlayAudio = "Queued Up On SpagBot: " + Vid.Title;
+                }
+                await Context.Channel.SendMessageAsync(PlayAudio);
+            }
+        }
+
+        [Command("Skip", RunMode = RunMode.Default)]
+        public async Task Skip()
+        {
+            YoutubeExtractor.VideoInfo Vid = await Player.GetNext();
+            if (Vid != null)
+            {
+                string NowPlaying = "Now Playing On SpagBot: " + Vid.Title;
+                await Context.Channel.SendMessageAsync(NowPlaying);
+                await Player.PlayNext();
+            }
+        }
+
+        [Command("Clear", RunMode = RunMode.Default)]
+        public Task Clear()
+        {
+            Player.ClearQueue();
+            return null;
+        }
+    }
+}
