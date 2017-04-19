@@ -72,6 +72,10 @@ namespace SPBot
                         }
                         Videos.Add(VideoObject);
                     }
+                    else
+                    {
+                        retval = "Song download failed :(";
+                    }
                 }
                 else
                 {
