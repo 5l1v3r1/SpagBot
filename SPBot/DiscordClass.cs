@@ -29,13 +29,20 @@ namespace SPBot
 
         public async Task MainAsync()
         {
+            if(System.IO.File.Exists("token.txt") == false)
+            {
+                Console.WriteLine("Please create a token.txt in the EXE directory with your bot token in, and try again.");
+                Console.WriteLine("Press any key to exit.");
+                Console.ReadLine();
+                return;
+            }
             Client.MessageReceived += Client_MessageReceived;
             Player.SendMessage_Raised += Player_SendMessage_Raised;
             Client.Connected += Client_Connected;
             Client.GuildAvailable += Client_GuildAvailable;
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             await Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
-            string token = "";
+            string token = System.IO.File.ReadAllText("token.txt");
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
             await Task.Delay(-1);
@@ -49,7 +56,11 @@ namespace SPBot
 
         private async Task Client_GuildAvailable(SocketGuild arg)
         {
-            await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("I'm All Fired Up!");
+            if(Statics.HasBooted == false)
+            {
+                Statics.HasBooted = true;
+                await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("I'm All Fired Up!");
+            }
         }
 
         private void CurrentDomain_ProcessExit(object sender, EventArgs e)
@@ -106,14 +117,14 @@ namespace SPBot
                 }
                 else if (PlayAudio == "QUEUE")
                 {
-                    YoutubeExtractor.VideoInfo Vid = await Player.GetNext();
+                    YoutubeExtractor.VideoInfo Vid = Player.Videos.Last();
                     PlayAudio = "Queued Up On SpagBot: " + Vid.Title;
                 }
                 await Context.Channel.SendMessageAsync(PlayAudio);
             }
         }
 
-        [Command("Skip", RunMode = RunMode.Default)]
+        [Command("Skip", RunMode = RunMode.Async)]
         public async Task Skip()
         {
             YoutubeExtractor.VideoInfo Vid = await Player.GetNext();
@@ -121,11 +132,11 @@ namespace SPBot
             {
                 string NowPlaying = "Now Playing On SpagBot: " + Vid.Title;
                 await Context.Channel.SendMessageAsync(NowPlaying);
-                await Player.PlayNext();
             }
+            await Player.PlayNext(true);
         }
 
-        [Command("Clear", RunMode = RunMode.Default)]
+        [Command("Clear", RunMode = RunMode.Async)]
         public Task Clear()
         {
             Player.ClearQueue();

@@ -16,10 +16,12 @@ namespace SPBot
     {
         private Process FFMPEGProcess;
         public AudioOutStream DiscordOutStream;
-        private List<VideoInfo> Videos;
+        public List<VideoInfo> Videos;
 
         public delegate void SendMessage(string Message);
         public event SendMessage SendMessage_Raised;
+
+        private IAudioClient AudioClient;
 
         public AudioPlayer()
         {
@@ -88,12 +90,13 @@ namespace SPBot
 
         public void EngageOutStream(IAudioClient audioClient)
         {
+            AudioClient = audioClient;
             DiscordOutStream = audioClient.CreatePCMStream(AudioApplication.Mixed, 1920);
         }
 
         public async Task<VideoInfo> GetNext()
         {
-            return Videos.Count > 0 ? Videos[0] : null;
+            return Videos.FirstOrDefault();
         }
 
         public async Task PlayNext(bool KillTrack = false)
@@ -114,26 +117,30 @@ namespace SPBot
         public void ClearQueue()
         {
             Videos.Clear();
+            DiscordOutStream = null;
         }
 
         public async Task PlayVideo(VideoInfo Video)
         {
+            var ffmpeg = CreateStream(Video.DownloadUrl);
+            FFMPEGProcess = ffmpeg;
+            var output = ffmpeg.StandardOutput.BaseStream;
             try
             {
-                var ffmpeg = CreateStream(Video.DownloadUrl);
-                FFMPEGProcess = ffmpeg;
-                var output = ffmpeg.StandardOutput.BaseStream;
+                
                 await output.CopyToAsync(DiscordOutStream);
                 await DiscordOutStream.FlushAsync();
+                FFMPEGProcess = null;
+                Process.GetProcessesByName("ffmpeg").ToList().ForEach(x => x.Kill());
             }
             catch(Exception)
             {
-                //:o
+                
             }
-            FFMPEGProcess = null;
             if (Videos.Count == 0)
             {
-                //End Of Queue.
+                DiscordOutStream = null;
+                await AudioClient.StopAsync();
             }
             else
             {
