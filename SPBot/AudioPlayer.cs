@@ -4,10 +4,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Linq;
 using YoutubeExtractor;
-using Beautiplayer;
-using System.Windows.Forms;
 using Discord.Audio;
-using Discord;
 using System.Diagnostics;
 
 namespace SPBot
@@ -16,7 +13,7 @@ namespace SPBot
     {
         private Process FFMPEGProcess;
         public AudioOutStream DiscordOutStream;
-        public List<VideoInfo> Videos;
+        public List<Object> Videos;
 
         public delegate void SendMessage(string Message);
         public event SendMessage SendMessage_Raised;
@@ -25,14 +22,14 @@ namespace SPBot
 
         public AudioPlayer()
         {
-            Videos = new List<VideoInfo>();
+            Videos = new List<Object>();
             FFMPEGProcess = null;
         }
 
         public string DoPlay(string VideoUrl)
         {
             string retval = "";
-            VideoInfo VideoObject = null;
+            Object VideoObject = null;
             if (VideoUrl.Trim() != "")
             {
                 string RegexDomain = @"^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)";
@@ -44,14 +41,38 @@ namespace SPBot
                     Domain = Match.Groups[0].Value.ToLower();
                     if (Domain.Contains("youtube") || Domain.Contains("youtu.be"))
                     {
-                        var values = DownloadUrlResolver.GetDownloadUrls(VideoUrl, false);
-                        VideoInfo Video = values.FirstOrDefault(video => video.VideoType == VideoType.Mp4);
-                        if (Video != null && Video.RequiresDecryption)
+                        IEnumerable<VideoInfo> values;
+                        try
                         {
-                            DownloadUrlResolver.DecryptDownloadUrl(Video);
+                            values = DownloadUrlResolver.GetDownloadUrls(VideoUrl, false);
+                            VideoInfo Video = values.FirstOrDefault(video => video.VideoType == VideoType.Mp4);
+                            if (Video != null && Video.RequiresDecryption)
+                            {
+                                DownloadUrlResolver.DecryptDownloadUrl(Video);
+                            }
+                            VideoObject = Video;
                         }
-                        VideoObject = Video;
-
+                        catch(YoutubeParseException)
+                        {
+                            string args = @"YouLiveLinker.py " + VideoUrl;
+                            ProcessStartInfo PSI = new ProcessStartInfo()
+                            {
+                                FileName = @"python.exe",
+                                Arguments = args
+                            };
+                            Process Proc = Process.Start(PSI);
+                            Proc.WaitForExit();
+                            string Link = System.IO.File.ReadAllText("file.txt");
+                            if (Link.Contains("m3u8") == false)
+                            {
+                                retval = "No valid URI found :(";
+                            }
+                            else
+                            {
+                                VideoObject = Link;
+                            }
+                            System.IO.File.Delete("file.txt");
+                        }
                     }
                     else if (Domain.Contains("soundcloud"))
                     {
@@ -98,7 +119,7 @@ namespace SPBot
             DiscordOutStream = audioClient.CreatePCMStream(AudioApplication.Mixed, 1920);
         }
 
-        public async Task<VideoInfo> GetNext()
+        public async Task<Object> GetNext()
         {
             return Videos.FirstOrDefault();
         }
@@ -112,9 +133,18 @@ namespace SPBot
             }
             if (Videos.Count > 0)
             {
-                VideoInfo NewVid = Videos.FirstOrDefault();
+                Object NewVid = Videos.FirstOrDefault();
                 Videos.Remove(NewVid);
-                await PlayVideo(NewVid);
+                if(NewVid is VideoInfo)
+                {
+                    VideoInfo CastedObject = (VideoInfo)NewVid;
+                    await PlayVideo(CastedObject);
+                }
+                else
+                {
+                    string CastedObject = (string)NewVid;
+                    await PlayURL(CastedObject);
+                }
             }
         }
 
@@ -148,8 +178,56 @@ namespace SPBot
             }
             else
             {
-                VideoInfo VidInfo = await GetNext();
-                SendMessage_Raised("Now Playing On SpagBot: " + VidInfo.Title);
+                Object VidInfo = await GetNext();
+                if (VidInfo is VideoInfo)
+                {
+                    VideoInfo CastedObject = (VideoInfo)VidInfo;
+                    SendMessage_Raised("Now Playing On SpagBot: " + CastedObject.Title);
+                }
+                else
+                {
+                    string CastedObject = (string)VidInfo;
+                    SendMessage_Raised("Playing Livestream on Spagbot!");
+                }
+                await PlayNext();
+            }
+        }
+
+        public async Task PlayURL(string url)
+        {
+            var ffmpeg = CreateStream(url);
+            FFMPEGProcess = ffmpeg;
+            var output = ffmpeg.StandardOutput.BaseStream;
+            try
+            {
+
+                await output.CopyToAsync(DiscordOutStream);
+                await DiscordOutStream.FlushAsync();
+                FFMPEGProcess = null;
+                Process.GetProcessesByName("ffmpeg").ToList().ForEach(x => x.Kill());
+            }
+            catch (Exception)
+            {
+
+            }
+            if (Videos.Count == 0)
+            {
+                DiscordOutStream = null;
+                await AudioClient.StopAsync();
+            }
+            else
+            {
+                Object VidInfo = await GetNext();
+                if (VidInfo is VideoInfo)
+                {
+                    VideoInfo CastedObject = (VideoInfo)VidInfo;
+                    SendMessage_Raised("Now Playing On SpagBot: " + CastedObject.Title);
+                }
+                else
+                {
+                    string CastedObject = (string)VidInfo;
+                    SendMessage_Raised("Playing Livestream on Spagbot!");
+                }
                 await PlayNext();
             }
         }

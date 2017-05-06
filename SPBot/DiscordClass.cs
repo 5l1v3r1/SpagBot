@@ -109,16 +109,32 @@ namespace SPBot
                 }
                 if (PlayAudio == "MOVE")
                 {
-                    YoutubeExtractor.VideoInfo Vid = await Player.GetNext();
-                    PlayAudio = "Now Playing On SpagBot: " + Vid.Title;
+                    Object Vid = await Player.GetNext();
+                    if(Vid is YoutubeExtractor.VideoInfo)
+                    {
+                        PlayAudio = "Now Playing On SpagBot: " + ((YoutubeExtractor.VideoInfo)Vid).Title;
+                    }
+                    else
+                    {
+                        PlayAudio = "Playing livestream on SpagBot!";
+                    }
+                    
                     await Context.Channel.SendMessageAsync(PlayAudio);
                     await Player.PlayNext();
                     return;
                 }
                 else if (PlayAudio == "QUEUE")
                 {
-                    YoutubeExtractor.VideoInfo Vid = Player.Videos.Last();
-                    PlayAudio = "Queued Up On SpagBot: " + Vid.Title;
+                    object Vid = Player.Videos.Last();
+                    if (Vid is YoutubeExtractor.VideoInfo)
+                    {
+                        PlayAudio = "Queued Up On SpagBot: " + ((YoutubeExtractor.VideoInfo)Vid).Title;
+                    }
+                    else
+                    {
+                        PlayAudio = "Stream Queued on SpagBot!";
+                    }
+                    
                 }
                 await Context.Channel.SendMessageAsync(PlayAudio);
             }
@@ -127,10 +143,18 @@ namespace SPBot
         [Command("Skip", RunMode = RunMode.Async)]
         public async Task Skip()
         {
-            YoutubeExtractor.VideoInfo Vid = await Player.GetNext();
+            object Vid = await Player.GetNext();
             if (Vid != null)
             {
-                string NowPlaying = "Now Playing On SpagBot: " + Vid.Title;
+                string NowPlaying = "";
+                if (Vid is YoutubeExtractor.VideoInfo)
+                {
+                    NowPlaying = "Now Playing On SpagBot: " + ((YoutubeExtractor.VideoInfo)Vid).Title;
+                }
+                else
+                {
+                    NowPlaying = "Playing livestream on SpagBot!";
+                }
                 await Context.Channel.SendMessageAsync(NowPlaying);
             }
             await Player.PlayNext(true);
