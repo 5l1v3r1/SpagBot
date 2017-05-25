@@ -94,6 +94,12 @@ namespace SPBot
             await DMToUserObject.SendMessageAsync(Statics.HelpMessages());
         }
 
+        [Command("Dab", RunMode = RunMode.Async)]
+        public async Task Dab()
+        {
+            await Context.Channel.SendMessageAsync("*dabs*");
+        }
+
         [Command("Play", RunMode = RunMode.Async)]
         public async Task Play(string Text)
         {
