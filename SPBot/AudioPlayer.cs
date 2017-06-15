@@ -15,10 +15,13 @@ namespace SPBot
         public AudioOutStream DiscordOutStream;
         public List<Object> Videos;
 
-        public delegate void SendMessage(string Message);
+        public delegate void SendMessage(string Message, Discord.IMessageChannel MessageChannel);
         public event SendMessage SendMessage_Raised;
 
+        public Discord.IMessageChannel MessageClient;
+
         private IAudioClient AudioClient;
+        private bool IsRepeated = false;
 
         public AudioPlayer()
         {
@@ -119,7 +122,7 @@ namespace SPBot
             DiscordOutStream = audioClient.CreatePCMStream(AudioApplication.Mixed, 1920);
         }
 
-        public async Task<Object> GetNext()
+        public Object GetNext()
         {
             return Videos.FirstOrDefault();
         }
@@ -165,11 +168,14 @@ namespace SPBot
                 await output.CopyToAsync(DiscordOutStream);
                 await DiscordOutStream.FlushAsync();
                 FFMPEGProcess = null;
-                Process.GetProcessesByName("ffmpeg").ToList().ForEach(x => x.Kill());
             }
             catch(Exception)
             {
                 
+            }
+            if(IsRepeated)
+            {
+                Videos.Insert(0, Video);
             }
             if (Videos.Count == 0)
             {
@@ -178,19 +184,28 @@ namespace SPBot
             }
             else
             {
-                Object VidInfo = await GetNext();
-                if (VidInfo is VideoInfo)
+                Object VidInfo = GetNext();
+                if(IsRepeated == false)
                 {
-                    VideoInfo CastedObject = (VideoInfo)VidInfo;
-                    SendMessage_Raised("Now Playing On SpagBot: " + CastedObject.Title);
-                }
-                else
-                {
-                    string CastedObject = (string)VidInfo;
-                    SendMessage_Raised("Playing Livestream on Spagbot!");
+                    if (VidInfo is VideoInfo)
+                    {
+                        VideoInfo CastedObject = (VideoInfo)VidInfo;
+                        SendMessage_Raised("Now Playing On SpagBot: " + CastedObject.Title, MessageClient);
+                    }
+                    else
+                    {
+                        string CastedObject = (string)VidInfo;
+                        SendMessage_Raised("Playing Livestream on Spagbot!", MessageClient);
+                    }
                 }
                 await PlayNext();
             }
+        }
+
+        public bool ToggleRepeat()
+        {
+            IsRepeated = !IsRepeated;
+            return IsRepeated;
         }
 
         public async Task PlayURL(string url)
@@ -204,7 +219,6 @@ namespace SPBot
                 await output.CopyToAsync(DiscordOutStream);
                 await DiscordOutStream.FlushAsync();
                 FFMPEGProcess = null;
-                Process.GetProcessesByName("ffmpeg").ToList().ForEach(x => x.Kill());
             }
             catch (Exception)
             {
@@ -217,16 +231,16 @@ namespace SPBot
             }
             else
             {
-                Object VidInfo = await GetNext();
+                Object VidInfo = GetNext();
                 if (VidInfo is VideoInfo)
                 {
                     VideoInfo CastedObject = (VideoInfo)VidInfo;
-                    SendMessage_Raised("Now Playing On SpagBot: " + CastedObject.Title);
+                    SendMessage_Raised("Now Playing On SpagBot: " + CastedObject.Title, MessageClient);
                 }
                 else
                 {
                     string CastedObject = (string)VidInfo;
-                    SendMessage_Raised("Playing Livestream on Spagbot!");
+                    SendMessage_Raised("Playing Livestream on Spagbot!", MessageClient);
                 }
                 await PlayNext();
             }

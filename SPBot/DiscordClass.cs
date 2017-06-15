@@ -14,17 +14,18 @@ namespace SPBot
 {
     public class DiscordClass : ModuleBase
     {
-        private AudioPlayer Player;
         private DiscordSocketClient Client;
         private CommandService Commands;
         private DependencyMap Map;
+        private Dictionary<IVoiceChannel, AudioPlayer> ChannelTrackList;
+
 
         public DiscordClass(DependencyMap MyMap)
         {
             Client = new DiscordSocketClient();
-            Player = MyMap.Get<AudioPlayer>();
             Commands = new CommandService();
             Map = MyMap;
+            ChannelTrackList = MyMap.Get<Dictionary<IVoiceChannel, AudioPlayer>>();
         }
 
         public async Task MainAsync()
@@ -37,7 +38,6 @@ namespace SPBot
                 return;
             }
             Client.MessageReceived += Client_MessageReceived;
-            Player.SendMessage_Raised += Player_SendMessage_Raised;
             Client.Connected += Client_Connected;
             Client.GuildAvailable += Client_GuildAvailable;
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
@@ -48,9 +48,8 @@ namespace SPBot
             await Task.Delay(-1);
         }
 
-        private void Player_SendMessage_Raised(string Message)
+        private void Player_SendMessage_Raised(string Message, IMessageChannel x)
         {
-            IMessageChannel x = Client.GetChannel(284040882796101632) as IMessageChannel;
             x.SendMessageAsync(Message);
         }
 
@@ -100,13 +99,36 @@ namespace SPBot
             await Context.Channel.SendMessageAsync("*dabs*");
         }
 
+        [Command("Say", RunMode = RunMode.Async)]
+        public async Task Say([Remainder]string Message)
+        {
+            //IUser Liam = await Context.Channel.GetUserAsync(128875352444370944);
+            //await Context.Channel.SendMessageAsync("This feature doesn't currently work, thanks " + Liam.Mention);
+            //return;
+            IUserMessage Mess = await Context.Channel.SendMessageAsync(Message, true);
+            await Mess.DeleteAsync();
+
+        }
+
         [Command("Play", RunMode = RunMode.Async)]
         public async Task Play(string Text)
         {
+            IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
+            if(channel == null)
+            {
+                return;
+            }
+            if(ChannelTrackList.Keys.Contains(channel) == false)
+            {
+                AudioPlayer NewPlayer = new AudioPlayer();
+                NewPlayer.MessageClient = Context.Message.Channel;
+                NewPlayer.SendMessage_Raised += Player_SendMessage_Raised;
+                ChannelTrackList.Add(channel, NewPlayer);
+            }
+            AudioPlayer Player = ChannelTrackList[channel];
             string PlayAudio = Player.DoPlay(Text);
             if (PlayAudio != "")
             {
-                IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
                 var IsInVoiceChannel = await channel.GetUserAsync(Context.Client.CurrentUser.Id);
                 if (IsInVoiceChannel == null || Player.DiscordOutStream == null)
                 {
@@ -115,7 +137,7 @@ namespace SPBot
                 }
                 if (PlayAudio == "MOVE")
                 {
-                    Object Vid = await Player.GetNext();
+                    Object Vid = Player.GetNext();
                     if(Vid is YoutubeExtractor.VideoInfo)
                     {
                         PlayAudio = "Now Playing On SpagBot: " + ((YoutubeExtractor.VideoInfo)Vid).Title;
@@ -146,10 +168,37 @@ namespace SPBot
             }
         }
 
+        [Command("Repeat", RunMode = RunMode.Async)]
+        public async Task Repeat()
+        {
+            IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
+            if (ChannelTrackList.Keys.Contains(channel) == false)
+            {
+                return;
+            }
+            AudioPlayer Player = ChannelTrackList[channel];
+            string Message = "";
+            if(Player.ToggleRepeat())
+            {
+                Message = "Repeat has been enabled!";
+            }
+            else
+            {
+                Message = "Repeat has been disabled!";
+            }
+            await Context.Channel.SendMessageAsync(Message);
+        }
+
         [Command("Skip", RunMode = RunMode.Async)]
         public async Task Skip()
         {
-            object Vid = await Player.GetNext();
+            IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
+            if(ChannelTrackList.Keys.Contains(channel) == false)
+            {
+                return;
+            }
+            AudioPlayer Player = ChannelTrackList[channel];
+            object Vid = Player.GetNext();
             if (Vid != null)
             {
                 string NowPlaying = "";
@@ -169,8 +218,14 @@ namespace SPBot
         [Command("Clear", RunMode = RunMode.Async)]
         public Task Clear()
         {
+            IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
+            if (ChannelTrackList.Keys.Contains(channel) == false)
+            {
+                return Task.CompletedTask;
+            }
+            AudioPlayer Player = ChannelTrackList[channel];
             Player.ClearQueue();
-            return null;
+            return Task.CompletedTask;
         }
     }
 }

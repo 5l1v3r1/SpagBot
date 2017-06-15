@@ -20,7 +20,7 @@ namespace SPBot
         private Program()
         {
             Map = new DependencyMap();
-            Map.Add(new AudioPlayer());
+            Map.Add(new Dictionary<Discord.IVoiceChannel, AudioPlayer>());
             DiscordClass = new DiscordClass(Map); 
             DiscordClass.MainAsync().GetAwaiter().GetResult();
         }
