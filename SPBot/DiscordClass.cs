@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
-using Beautiplayer;
 using Discord;
 using System.Diagnostics;
 using Discord.Audio;

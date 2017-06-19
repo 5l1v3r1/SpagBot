@@ -56,9 +56,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Beautiplayer">
-      <HintPath>..\..\Beautiplayer\Beautiplayer\bin\Debug\Beautiplayer.dll</HintPath>
-    </Reference>
     <Reference Include="Discord.Net.Commands, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Discord.Net.Commands.1.0.0-rc\lib\netstandard1.3\Discord.Net.Commands.dll</HintPath>
     </Reference>
@@ -168,7 +165,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="YoutubeExtractor, Version=0.10.11.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\YoutubeExtractor.dll</HintPath>
+      <HintPath>.\YoutubeExtractor.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
