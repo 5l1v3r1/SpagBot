@@ -30,7 +30,7 @@ namespace SPBot
 
         public async Task MainAsync()
         {
-            if(System.IO.File.Exists("token.txt") == false)
+            if (System.IO.File.Exists("token.txt") == false)
             {
                 Console.WriteLine("Please create a token.txt in the EXE directory with your bot token in, and try again.");
                 Console.WriteLine("Press any key to exit.");
@@ -55,7 +55,7 @@ namespace SPBot
 
         private async Task Client_GuildAvailable(SocketGuild arg)
         {
-            if(Statics.HasBooted == false)
+            if (Statics.HasBooted == false)
             {
                 Statics.HasBooted = true;
                 await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("I'm All Fired Up!");
@@ -114,14 +114,16 @@ namespace SPBot
         public async Task Play(string Text)
         {
             IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
-            if(channel == null)
+            if (channel == null)
             {
                 return;
             }
-            if(ChannelTrackList.Keys.Contains(channel) == false)
+            if (ChannelTrackList.Keys.Contains(channel) == false)
             {
-                AudioPlayer NewPlayer = new AudioPlayer();
-                NewPlayer.MessageClient = Context.Message.Channel;
+                AudioPlayer NewPlayer = new AudioPlayer()
+                {
+                    MessageClient = Context.Message.Channel
+                };
                 NewPlayer.SendMessage_Raised += Player_SendMessage_Raised;
                 ChannelTrackList.Add(channel, NewPlayer);
             }
@@ -138,7 +140,7 @@ namespace SPBot
                 if (PlayAudio == "MOVE")
                 {
                     Object Vid = Player.GetNext();
-                    if(Vid is YoutubeExtractor.VideoInfo)
+                    if (Vid is YoutubeExtractor.VideoInfo)
                     {
                         PlayAudio = "Now Playing On SpagBot: " + ((YoutubeExtractor.VideoInfo)Vid).Title;
                     }
@@ -146,7 +148,7 @@ namespace SPBot
                     {
                         PlayAudio = "Playing livestream on SpagBot!";
                     }
-                    
+
                     await Context.Channel.SendMessageAsync(PlayAudio);
                     await Player.PlayNext();
                     return;
@@ -162,7 +164,7 @@ namespace SPBot
                     {
                         PlayAudio = "Stream Queued on SpagBot!";
                     }
-                    
+
                 }
                 await Context.Channel.SendMessageAsync(PlayAudio);
             }
@@ -178,7 +180,7 @@ namespace SPBot
             }
             AudioPlayer Player = ChannelTrackList[channel];
             string Message = "";
-            if(Player.ToggleRepeat())
+            if (Player.ToggleRepeat())
             {
                 Message = "Repeat has been enabled!";
             }
@@ -193,7 +195,7 @@ namespace SPBot
         public async Task Skip()
         {
             IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
-            if(ChannelTrackList.Keys.Contains(channel) == false)
+            if (ChannelTrackList.Keys.Contains(channel) == false)
             {
                 return;
             }

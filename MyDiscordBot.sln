@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPBot", "SPBot\SPBot.csproj", "{F99F2BB3-9842-47A1-8CA9-BD770163E07E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SPBot.Core", "SPBot.Core\SPBot.Core.csproj", "{9F865C84-EEF8-440A-B250-49353070EA78}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,14 @@ Global
 		{F99F2BB3-9842-47A1-8CA9-BD770163E07E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F99F2BB3-9842-47A1-8CA9-BD770163E07E}.Release|x64.ActiveCfg = Release|x64
 		{F99F2BB3-9842-47A1-8CA9-BD770163E07E}.Release|x64.Build.0 = Release|x64
+		{9F865C84-EEF8-440A-B250-49353070EA78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F865C84-EEF8-440A-B250-49353070EA78}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F865C84-EEF8-440A-B250-49353070EA78}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9F865C84-EEF8-440A-B250-49353070EA78}.Debug|x64.Build.0 = Debug|Any CPU
+		{9F865C84-EEF8-440A-B250-49353070EA78}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F865C84-EEF8-440A-B250-49353070EA78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F865C84-EEF8-440A-B250-49353070EA78}.Release|x64.ActiveCfg = Release|Any CPU
+		{9F865C84-EEF8-440A-B250-49353070EA78}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
