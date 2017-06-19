@@ -1,7 +1,5 @@
-# SpagBot
+# SpagBot [![Build status](https://ci.appveyor.com/api/projects/status/psnod85ca34bdvxr?svg=true)](https://ci.appveyor.com/project/JackRyder/spagbot)
 A discord bot written in C# with the love and help of Discord.NET
-
-[![Build status](https://ci.appveyor.com/api/projects/status/psnod85ca34bdvxr?svg=true)](https://ci.appveyor.com/project/JackRyder/spagbot)
 
 
 ## What is SpagBot?
