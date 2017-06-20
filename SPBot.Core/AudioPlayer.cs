@@ -132,7 +132,7 @@ namespace SPBot.Core
         public void EngageOutStream(IAudioClient audioClient)
         {
             AudioClient = audioClient;
-            DiscordOutStream = audioClient.CreatePCMStream(AudioApplication.Mixed, 1920);
+            DiscordOutStream = audioClient.CreatePCMStream(AudioApplication.Mixed);
         }
 
         public VideoInfo GetNext()

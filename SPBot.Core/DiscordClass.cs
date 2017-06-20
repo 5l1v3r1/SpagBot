@@ -29,8 +29,8 @@ namespace SPBot.Core
 
         public async Task MainAsync()
         {
-            Console.Write(System.IO.Directory.GetCurrentDirectory());
-            if(System.IO.File.Exists("token.txt") == false)
+            Console.WriteLine("We bootin' up now!");
+            if (System.IO.File.Exists("token.txt") == false)
             {
                 Console.WriteLine("Please create a token.txt in the EXE directory with your bot token in, and try again.");
                 Console.WriteLine("Press any key to exit.");
@@ -55,11 +55,12 @@ namespace SPBot.Core
 
         private async Task Client_GuildAvailable(SocketGuild arg)
         {
-            if(Statics.HasBooted == false)
-            {
-                Statics.HasBooted = true;
-                await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("I'm All Fired Up!");
-            }
+            //if(Statics.HasBooted == false)
+            //{
+            Statics.HasBooted = true;
+            Console.WriteLine("Connected to guild: " + arg.Name);
+            await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("SpagBot is ready to serve! :)");
+            //}
         }
 
         private void CurrentDomain_ProcessExit(object sender, EventArgs e)
@@ -69,6 +70,7 @@ namespace SPBot.Core
 
         private async Task Client_Connected()
         {
+            Console.WriteLine("Connected to discord as: " + Client.CurrentUser.Username);
             await Client.SetGameAsync("+help");
         }
 
@@ -114,14 +116,14 @@ namespace SPBot.Core
         public async Task Play(string Text)
         {
             IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
-            if(channel == null)
+            if (channel == null)
             {
                 return;
             }
-            if(ChannelTrackList.Keys.Contains(channel) == false)
+            if (ChannelTrackList.Keys.Contains(channel) == false)
             {
                 AudioPlayer NewPlayer = new AudioPlayer()
-                { 
+                {
                     MessageClient = Context.Message.Channel
                 };
                 NewPlayer.SendMessage_Raised += Player_SendMessage_Raised;
@@ -140,7 +142,7 @@ namespace SPBot.Core
                 if (PlayAudio == "MOVE")
                 {
                     VideoInfo Vid = Player.GetNext();
-                    if(Vid is VideoInfo)
+                    if (Vid is VideoInfo)
                     {
                         PlayAudio = "Now Playing On SpagBot: " + Vid.Title;
                     }
@@ -148,7 +150,7 @@ namespace SPBot.Core
                     {
                         PlayAudio = "Playing livestream on SpagBot!";
                     }
-                    
+
                     await Context.Channel.SendMessageAsync(PlayAudio);
                     await Player.PlayNext();
                     return;
@@ -164,7 +166,7 @@ namespace SPBot.Core
                     {
                         PlayAudio = "Stream Queued on SpagBot!";
                     }
-                    
+
                 }
                 await Context.Channel.SendMessageAsync(PlayAudio);
             }
@@ -180,7 +182,7 @@ namespace SPBot.Core
             }
             AudioPlayer Player = ChannelTrackList[channel];
             string Message = "";
-            if(Player.ToggleRepeat())
+            if (Player.ToggleRepeat())
             {
                 Message = "Repeat has been enabled!";
             }
@@ -195,7 +197,7 @@ namespace SPBot.Core
         public async Task Skip()
         {
             IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
-            if(ChannelTrackList.Keys.Contains(channel) == false)
+            if (ChannelTrackList.Keys.Contains(channel) == false)
             {
                 return;
             }

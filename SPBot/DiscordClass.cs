@@ -57,7 +57,7 @@ namespace SPBot
             if (Statics.HasBooted == false)
             {
                 Statics.HasBooted = true;
-                await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("I'm All Fired Up!");
+               // await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("I'm All Fired Up!");
             }
         }
 

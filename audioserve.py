@@ -2,7 +2,7 @@ import io, sys, socket, time, youtube_dl, json
 
 def GetYoutubeLink(value):
     ydl = youtube_dl.YoutubeDL({
-    	"format": 'bestaudio/best'  # choice of quality
+    	"format": 'best'  # choice of quality
 	})
     try:
         with ydl:
