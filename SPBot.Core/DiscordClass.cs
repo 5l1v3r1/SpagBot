@@ -17,6 +17,7 @@ namespace SPBot.Core
         private CommandService Commands;
         private IServiceProvider Map;
         private Dictionary<IVoiceChannel, AudioPlayer> ChannelTrackList;
+        private List<SocketGuild> ConnectedGuilds;
 
 
         public DiscordClass(IServiceProvider MyMap)
@@ -40,12 +41,20 @@ namespace SPBot.Core
             Client.MessageReceived += Client_MessageReceived;
             Client.Connected += Client_Connected;
             Client.GuildAvailable += Client_GuildAvailable;
+            Client.JoinedGuild += Client_JoinedGuild;
             //AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             await Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
             string token = System.IO.File.ReadAllText("token.txt");
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
             await Task.Delay(-1);
+        }
+
+        private async Task Client_JoinedGuild(SocketGuild arg)
+        {
+            Console.WriteLine("Joined guild: " + arg.Name);
+            ConnectedGuilds.Add(arg);
+            await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("SpagBot is ready to serve! :)");
         }
 
         private void Player_SendMessage_Raised(string Message, IMessageChannel x)
@@ -55,12 +64,16 @@ namespace SPBot.Core
 
         private async Task Client_GuildAvailable(SocketGuild arg)
         {
-            //if(Statics.HasBooted == false)
-            //{
-            Statics.HasBooted = true;
-            Console.WriteLine("Connected to guild: " + arg.Name);
-            await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("SpagBot is ready to serve! :)");
-            //}
+            if(ConnectedGuilds == null)
+            {
+                ConnectedGuilds = new List<SocketGuild>();
+            }
+            if (ConnectedGuilds.Contains(arg) == false)
+            {
+                Console.WriteLine("Connected to guild: " + arg.Name);
+                ConnectedGuilds.Add(arg);
+                await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("SpagBot is ready to serve! :)");
+            }
         }
 
         private void CurrentDomain_ProcessExit(object sender, EventArgs e)
@@ -70,7 +83,11 @@ namespace SPBot.Core
 
         private async Task Client_Connected()
         {
-            Console.WriteLine("Connected to discord as: " + Client.CurrentUser.Username);
+            if(Statics.HasBooted == false)
+            {
+                Console.WriteLine("Connected to discord as: " + Client.CurrentUser.Username);
+                Statics.HasBooted = true;
+            }
             await Client.SetGameAsync("+help");
         }
 
@@ -139,36 +156,25 @@ namespace SPBot.Core
                     IAudioClient audioClient = await channel.ConnectAsync();
                     Player.EngageOutStream(audioClient);
                 }
+                VideoInfo Vid = null;
                 if (PlayAudio == "MOVE")
                 {
-                    VideoInfo Vid = Player.GetNext();
-                    if (Vid is VideoInfo)
-                    {
-                        PlayAudio = "Now Playing On SpagBot: " + Vid.Title;
-                    }
-                    else
-                    {
-                        PlayAudio = "Playing livestream on SpagBot!";
-                    }
-
+                    Vid = Player.GetNext();
+                    PlayAudio = "Now Playing On SpagBot: " + Vid.Title;
                     await Context.Channel.SendMessageAsync(PlayAudio);
                     await Player.PlayNext();
                     return;
                 }
                 else if (PlayAudio == "QUEUE")
                 {
-                    VideoInfo Vid = Player.Videos.Last();
-                    if (Vid is VideoInfo)
-                    {
-                        PlayAudio = "Queued Up On SpagBot: " + Vid.Title;
-                    }
-                    else
-                    {
-                        PlayAudio = "Stream Queued on SpagBot!";
-                    }
-
+                    Vid = Player.Videos.Last();
+                    PlayAudio = "Queued Up On SpagBot: " + Vid.Title;
                 }
-                await Context.Channel.SendMessageAsync(PlayAudio);
+                if (Vid != null)
+                {
+                    Console.WriteLine(Context.Message.Author.Username + " has requested " + Vid.Title);
+                    await Context.Channel.SendMessageAsync(PlayAudio);
+                }
             }
         }
 
