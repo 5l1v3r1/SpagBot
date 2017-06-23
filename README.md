@@ -13,7 +13,7 @@ SpagBot at the moment is only fully functional as the .NET Framework version, as
 
 ## What's the Python file?
 
-The Python file is my way of making sure I don't need libraries in .NET that work for both .NET Framework and .NET Core, which is good because the library that the main one uses is currently .NET Framework only, and has a few copies that don't replicate and work correctly with my current codebase. Once the .NET Core build is working this file will be used to serve media requests from places such as SoundCloud, YouTube and other media sources.
+The Python file is my way of making sure I don't need libraries in .NET that work for both .NET Framework and .NET Core, which is good because the library that the main one uses is currently .NET Framework only, and has a few copies that don't replicate and work correctly with my current codebase. ~~Once the .NET Core build is working this file will be used to serve media requests from places such as SoundCloud, YouTube and other media sources.~~ The .NET core application now works, although it currently only supports YouTube videos and livestreams at the moment :)
 
 ## Can I use your bot in my Discord?
 
