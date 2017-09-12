@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
-
+using System.IO;
+using System.Reflection;
 
 namespace SPBot.Core
 {
@@ -12,6 +13,12 @@ namespace SPBot.Core
 
         static void Main()
         {
+            System.Diagnostics.ProcessStartInfo StartInfo = new System.Diagnostics.ProcessStartInfo()
+            {
+                Arguments = "\"" + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\audioserve.py" + "\"",
+                FileName = @"C:\Users\Administrator\AppData\Local\Programs\Python\Python36-32\python.exe",
+            };
+            System.Diagnostics.Process.Start(StartInfo);
             Program P = new Program();
         }
 

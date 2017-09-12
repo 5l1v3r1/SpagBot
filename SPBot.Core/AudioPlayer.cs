@@ -17,6 +17,9 @@ namespace SPBot.Core
         public delegate void SendMessage(string Message, Discord.IMessageChannel MessageChannel);
         public event SendMessage SendMessage_Raised;
 
+        private System.Threading.Timer RadioTimer;
+        private string CurrentSong = "";
+
         public Discord.IMessageChannel MessageClient;
 
         private IAudioClient AudioClient;
@@ -43,7 +46,9 @@ namespace SPBot.Core
                     Domain = Match.Groups[0].Value.ToLower();
                     if (Domain.Contains("youtube") || Domain.Contains("youtu.be"))
                     {
-                        VideoObject = await GetVideoViaTCPAsync(VideoUrl);
+                        string ActualYoutubeUrl = "https://www.youtube.com/watch?v=";
+                        ActualYoutubeUrl += Regex.Match(VideoUrl, @"youtu(?:.*\/v\/|.*v\=|\.be\/)([A-Za-z0-9_\-]{11})").Groups[1].Value;
+                        VideoObject = await GetVideoViaTCPAsync(ActualYoutubeUrl);
                     }
                     else if (Domain.Contains("soundcloud"))
                     {
@@ -129,6 +134,13 @@ namespace SPBot.Core
             }
         }
 
+        public async Task PlayRadio()
+        {
+            await PlayNext(true);
+            RadioTimer = new System.Threading.Timer(RadioPoll, null, 0, 1000);
+            await PlayURL("http://stream.hive365.co.uk:8088/live");
+        }
+
         public void EngageOutStream(IAudioClient audioClient)
         {
             AudioClient = audioClient;
@@ -142,7 +154,8 @@ namespace SPBot.Core
 
         public async Task PlayNext(bool KillTrack = false)
         {
-            if(KillTrack && FFMPEGProcess != null)
+            RadioTimer = null;
+            if (KillTrack && FFMPEGProcess != null)
             {
                 FFMPEGProcess.Kill();
                 FFMPEGProcess = null;
@@ -266,6 +279,33 @@ namespace SPBot.Core
                 CreateNoWindow = true
             };
             return Process.Start(ffmpeg);
+        }
+
+        private async void RadioPoll(Object state)
+        {
+            string PollingUrl = "https://hive365.co.uk/streaminfo/info.php";
+            System.Net.HttpWebRequest WebRequest = System.Net.WebRequest.CreateHttp(PollingUrl);
+            using (var resp = await WebRequest.GetResponseAsync())
+            {
+                using (var streamreader = new System.IO.StreamReader(resp.GetResponseStream()))
+                {
+                    dynamic JsonValue = Newtonsoft.Json.JsonConvert.DeserializeObject(await streamreader.ReadToEndAsync());
+                    try
+                    {
+                        string SongName = JsonValue.info.artist_song;
+                        if (CurrentSong != SongName)
+                        {
+                            SendMessage_Raised("Now playing " + SongName + " on Spagbot via Hive365 Radio!", MessageClient);
+                            CurrentSong = SongName;
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        //RuntimeBinder exception probably :)
+                    }
+                }
+            }
+            WebRequest = null;
         }
 
     }

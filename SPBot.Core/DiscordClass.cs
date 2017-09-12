@@ -42,6 +42,7 @@ namespace SPBot.Core
             Client.Connected += Client_Connected;
             Client.GuildAvailable += Client_GuildAvailable;
             Client.JoinedGuild += Client_JoinedGuild;
+            BindQuitEvents();
             //AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             await Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
             string token = System.IO.File.ReadAllText("token.txt");
@@ -50,11 +51,19 @@ namespace SPBot.Core
             await Task.Delay(-1);
         }
 
+        private void BindQuitEvents()
+        {
+            Console.CancelKeyPress += async (s, ev) =>
+            {
+                await Client.LogoutAsync();
+            };
+        }
+
         private async Task Client_JoinedGuild(SocketGuild arg)
         {
             Console.WriteLine("Joined guild: " + arg.Name);
             ConnectedGuilds.Add(arg);
-            await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("SpagBot is ready to serve! :)");
+            //await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("SpagBot is ready to serve! :)");
         }
 
         private void Player_SendMessage_Raised(string Message, IMessageChannel x)
@@ -72,7 +81,7 @@ namespace SPBot.Core
             {
                 Console.WriteLine("Connected to guild: " + arg.Name);
                 ConnectedGuilds.Add(arg);
-                await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("SpagBot is ready to serve! :)");
+                //await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot") || x.Name.ToLower().Contains("control")).First().SendMessageAsync("DJ SpagBot ready to play!");
             }
         }
 
@@ -135,6 +144,7 @@ namespace SPBot.Core
             IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
             if (channel == null)
             {
+                await Context.Channel.SendMessageAsync("Please join a voice channel before requesting tracks! :)");
                 return;
             }
             if (ChannelTrackList.Keys.Contains(channel) == false)
@@ -150,6 +160,11 @@ namespace SPBot.Core
             string PlayAudio = await Player.DoPlayAsync(Text);
             if (PlayAudio != "")
             {
+                if(PlayAudio == "Song download failed :(")
+                {
+                    await Context.Channel.SendMessageAsync(PlayAudio);
+                    return;
+                }
                 var IsInVoiceChannel = await channel.GetUserAsync(Context.Client.CurrentUser.Id);
                 if (IsInVoiceChannel == null || Player.DiscordOutStream == null)
                 {
@@ -197,6 +212,34 @@ namespace SPBot.Core
                 Message = "Repeat has been disabled!";
             }
             await Context.Channel.SendMessageAsync(Message);
+        }
+
+        [Command("Radio", RunMode = RunMode.Async)]
+        public async Task Radio()
+        {
+            IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
+            if (channel == null)
+            {
+                await Context.Channel.SendMessageAsync("Please join a voice channel before requesting radio! :)");
+                return;
+            }
+            if (ChannelTrackList.Keys.Contains(channel) == false)
+            {
+                AudioPlayer NewPlayer = new AudioPlayer()
+                {
+                    MessageClient = Context.Message.Channel
+                };
+                NewPlayer.SendMessage_Raised += Player_SendMessage_Raised;
+                ChannelTrackList.Add(channel, NewPlayer);
+            }
+            AudioPlayer Player = ChannelTrackList[channel];
+            var IsInVoiceChannel = await channel.GetUserAsync(Context.Client.CurrentUser.Id);
+            if (IsInVoiceChannel == null || Player.DiscordOutStream == null)
+            {
+                IAudioClient audioClient = await channel.ConnectAsync();
+                Player.EngageOutStream(audioClient);
+            }
+            await Player.PlayRadio();
         }
 
         [Command("Skip", RunMode = RunMode.Async)]
