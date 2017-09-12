@@ -8,7 +8,7 @@ using System.Diagnostics;
 
 namespace SPBot.Core
 {
-    public class AudioPlayer
+    public class AudioPlayer : IDisposable
     {
         private Process FFMPEGProcess;
         public AudioOutStream DiscordOutStream;
@@ -108,7 +108,7 @@ namespace SPBot.Core
                 }
                 VideoInfo VideoInfo = null;
                 Newtonsoft.Json.Linq.JToken Vals = Newtonsoft.Json.Linq.JToken.Parse(response);
-                if(Vals["errorset"] != null)
+                if (Vals["errorset"] != null)
                 {
                     SendMessage_Raised("Failed to get track: " + Vals.SelectToken("errorset").ToString(), MessageClient);
                 }
@@ -164,7 +164,7 @@ namespace SPBot.Core
             {
                 VideoInfo NewVid = Videos.FirstOrDefault();
                 Videos.Remove(NewVid);
-                if(NewVid.VideoType == VideoInfo.Types.Video)
+                if (NewVid.VideoType == VideoInfo.Types.Video)
                 {
                     await PlayVideo(NewVid);
                 }
@@ -189,16 +189,16 @@ namespace SPBot.Core
             var output = ffmpeg.StandardOutput.BaseStream;
             try
             {
-                
+
                 await output.CopyToAsync(DiscordOutStream);
                 await DiscordOutStream.FlushAsync();
                 FFMPEGProcess = null;
             }
-            catch(Exception)
+            catch (Exception)
             {
-                
+
             }
-            if(IsRepeated)
+            if (IsRepeated)
             {
                 Videos.Insert(0, Video);
             }
@@ -210,7 +210,7 @@ namespace SPBot.Core
             else
             {
                 VideoInfo VidInfo = GetNext();
-                if(IsRepeated == false)
+                if (IsRepeated == false)
                 {
                     if (VidInfo.VideoType == VideoInfo.Types.Video)
                     {
@@ -299,7 +299,7 @@ namespace SPBot.Core
                             CurrentSong = SongName;
                         }
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         //RuntimeBinder exception probably :)
                     }
@@ -308,5 +308,16 @@ namespace SPBot.Core
             WebRequest = null;
         }
 
+        public async void Dispose()
+        {
+            await AudioClient.StopAsync();
+            FFMPEGProcess = null;
+            DiscordOutStream = null;
+            Videos = null;
+            RadioTimer = null;
+            CurrentSong = "";
+            MessageClient = null;
+            AudioClient = null;
+        }
     }
 }

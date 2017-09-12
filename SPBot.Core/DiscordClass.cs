@@ -42,6 +42,7 @@ namespace SPBot.Core
             Client.Connected += Client_Connected;
             Client.GuildAvailable += Client_GuildAvailable;
             Client.JoinedGuild += Client_JoinedGuild;
+            System.Threading.Timer RoomTimer = new System.Threading.Timer(TimerCallback, null, 0, 60000);
             BindQuitEvents();
             //AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             await Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
@@ -49,6 +50,26 @@ namespace SPBot.Core
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
             await Task.Delay(-1);
+        }
+
+        private void TimerCallback(object obj)
+        {
+            Console.WriteLine("Begin Minutely Cleanup");
+            List<IVoiceChannel> ObjectsToRemove = new List<IVoiceChannel>();
+            foreach(KeyValuePair<IVoiceChannel, AudioPlayer> Items in ChannelTrackList)
+            {
+                SocketGuildUser CurrentUser = Client.GetGuild(Items.Key.GuildId).CurrentUser;
+                var users = ((SocketVoiceChannel)Items.Key).Users;
+                if (users.Count() == 1 || users.Contains(CurrentUser) == false)
+                {
+                    Items.Value.Dispose();
+                    ObjectsToRemove.Add(Items.Key);
+                }
+            }
+            foreach(var ObjectToRemove in ObjectsToRemove)
+            {
+                ChannelTrackList.Remove(ObjectToRemove);
+            }
         }
 
         private void BindQuitEvents()
