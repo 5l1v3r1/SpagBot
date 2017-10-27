@@ -295,6 +295,8 @@ namespace SPBot.Core
                         string SongName = JsonValue.info.artist_song;
                         if (CurrentSong != SongName)
                         {
+                            var MessagesToDelete = MessageClient.GetMessagesAsync().Cast<Discord.IMessage>().Where(x => x.Content.Contains("via Hive365 Radio!"));
+                            await MessageClient.DeleteMessagesAsync(await MessagesToDelete.ToList());
                             SendMessage_Raised("Now playing " + SongName + " on Spagbot via Hive365 Radio!", MessageClient);
                             CurrentSong = SongName;
                         }

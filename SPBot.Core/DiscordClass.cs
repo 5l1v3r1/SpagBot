@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord;
-using System.Diagnostics;
 using Discord.Audio;
 using Discord.Commands;
 
@@ -40,11 +38,10 @@ namespace SPBot.Core
             }
             Client.MessageReceived += Client_MessageReceived;
             Client.Connected += Client_Connected;
-            Client.GuildAvailable += Client_GuildAvailable;
-            Client.JoinedGuild += Client_JoinedGuild;
-            System.Threading.Timer RoomTimer = new System.Threading.Timer(TimerCallback, null, 0, 60000);
+            Client.GuildAvailable += async (guild) =>  Console.WriteLine(guild.Name);
+            Client.JoinedGuild += async (guild) => Console.WriteLine(guild.Name);
+           // System.Threading.Timer RoomTimer = new System.Threading.Timer(TimerCallback, null, 0, 60000);
             BindQuitEvents();
-            //AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             await Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
             string token = System.IO.File.ReadAllText("token.txt");
             await Client.LoginAsync(TokenType.Bot, token);
@@ -80,30 +77,9 @@ namespace SPBot.Core
             };
         }
 
-        private async Task Client_JoinedGuild(SocketGuild arg)
-        {
-            Console.WriteLine("Joined guild: " + arg.Name);
-            ConnectedGuilds.Add(arg);
-            //await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot")).First().SendMessageAsync("SpagBot is ready to serve! :)");
-        }
-
         private void Player_SendMessage_Raised(string Message, IMessageChannel x)
         {
             x.SendMessageAsync(Message);
-        }
-
-        private async Task Client_GuildAvailable(SocketGuild arg)
-        {
-            if(ConnectedGuilds == null)
-            {
-                ConnectedGuilds = new List<SocketGuild>();
-            }
-            if (ConnectedGuilds.Contains(arg) == false)
-            {
-                Console.WriteLine("Connected to guild: " + arg.Name);
-                ConnectedGuilds.Add(arg);
-                //await arg.TextChannels.Where(x => x.Name.ToLower().Contains("bot") || x.Name.ToLower().Contains("control")).First().SendMessageAsync("DJ SpagBot ready to play!");
-            }
         }
 
         private void CurrentDomain_ProcessExit(object sender, EventArgs e)
@@ -125,7 +101,7 @@ namespace SPBot.Core
         {
             var message = arg as SocketUserMessage;
             int prefix = 0;
-            if (message.HasCharPrefix('+', ref prefix) && message.Channel.Name.ToLower().Contains("bot"))
+            if (message.HasCharPrefix('+', ref prefix) && (message.Channel.Name.ToLower().Contains("bot") || message.Channel.Name.ToLower().Contains("control")))
             {
                 var context = new CommandContext(Client, message);
                 var result = await Commands.ExecuteAsync(context, prefix, Map);
@@ -138,7 +114,7 @@ namespace SPBot.Core
         [Command("Help", RunMode = RunMode.Async)]
         public async Task Help()
         {
-            var DMToUserObject = await Context.User.CreateDMChannelAsync();
+            var DMToUserObject = await Context.User.GetOrCreateDMChannelAsync();
             await DMToUserObject.SendMessageAsync(Statics.HelpMessages());
         }
 
@@ -197,9 +173,7 @@ namespace SPBot.Core
                 {
                     Vid = Player.GetNext();
                     PlayAudio = "Now Playing On SpagBot: " + Vid.Title;
-                    await Context.Channel.SendMessageAsync(PlayAudio);
-                    await Player.PlayNext();
-                    return;
+                    await Player.PlayNext(true);
                 }
                 else if (PlayAudio == "QUEUE")
                 {
@@ -209,6 +183,7 @@ namespace SPBot.Core
                 if (Vid != null)
                 {
                     Console.WriteLine(Context.Message.Author.Username + " has requested " + Vid.Title);
+                    await Context.Message.DeleteAsync();
                     await Context.Channel.SendMessageAsync(PlayAudio);
                 }
             }
