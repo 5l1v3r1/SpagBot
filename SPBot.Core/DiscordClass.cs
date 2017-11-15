@@ -38,10 +38,11 @@ namespace SPBot.Core
             }
             Client.MessageReceived += Client_MessageReceived;
             Client.Connected += Client_Connected;
-            Client.GuildAvailable += async (guild) =>  Console.WriteLine(guild.Name);
+            Client.GuildAvailable += async (guild) => Console.WriteLine(guild.Name);
             Client.JoinedGuild += async (guild) => Console.WriteLine(guild.Name);
-           // System.Threading.Timer RoomTimer = new System.Threading.Timer(TimerCallback, null, 0, 60000);
-            BindQuitEvents();
+            System.Threading.Timer RoomTimer = new System.Threading.Timer(TimerCallback, null, 0, 60000);
+            Console.CancelKeyPress += async (s, ev) => { await Client.LogoutAsync();
+            };
             await Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
             string token = System.IO.File.ReadAllText("token.txt");
             await Client.LoginAsync(TokenType.Bot, token);
@@ -67,14 +68,6 @@ namespace SPBot.Core
             {
                 ChannelTrackList.Remove(ObjectToRemove);
             }
-        }
-
-        private void BindQuitEvents()
-        {
-            Console.CancelKeyPress += async (s, ev) =>
-            {
-                await Client.LogoutAsync();
-            };
         }
 
         private void Player_SendMessage_Raised(string Message, IMessageChannel x)
@@ -107,7 +100,6 @@ namespace SPBot.Core
                 var result = await Commands.ExecuteAsync(context, prefix, Map);
                 if (!result.IsSuccess)
                     await context.Channel.SendMessageAsync(result.ErrorReason);
-
             }
         }
 
@@ -173,7 +165,6 @@ namespace SPBot.Core
                 {
                     Vid = Player.GetNext();
                     PlayAudio = "Now Playing On SpagBot: " + Vid.Title;
-                    await Player.PlayNext(true);
                 }
                 else if (PlayAudio == "QUEUE")
                 {
@@ -185,6 +176,8 @@ namespace SPBot.Core
                     Console.WriteLine(Context.Message.Author.Username + " has requested " + Vid.Title);
                     await Context.Message.DeleteAsync();
                     await Context.Channel.SendMessageAsync(PlayAudio);
+                    if(PlayAudio.Contains("Now Playing On SpagBot:"))
+                        await Player.PlayNext(true);
                 }
             }
         }

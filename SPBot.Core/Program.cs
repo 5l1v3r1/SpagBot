@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace SPBot.Core
 {
@@ -13,10 +14,15 @@ namespace SPBot.Core
 
         static void Main()
         {
+            string FileName = @"C:\Users\Administrator\AppData\Local\Programs\Python\Python36-32\python.exe";
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                FileName = "python";
+            }
             System.Diagnostics.ProcessStartInfo StartInfo = new System.Diagnostics.ProcessStartInfo()
             {
                 Arguments = "\"" + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\audioserve.py" + "\"",
-                FileName = @"C:\Users\Administrator\AppData\Local\Programs\Python\Python36-32\python.exe",
+                FileName = FileName,
             };
             System.Diagnostics.Process.Start(StartInfo);
             Program P = new Program();
