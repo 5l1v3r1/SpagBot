@@ -15,13 +15,15 @@ namespace SPBot.Core
         static void Main()
         {
             string FileName = @"C:\Users\Administrator\AppData\Local\Programs\Python\Python36-32\python.exe";
+            string Args = "\"" + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\audioserve.py" + "\"";
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 FileName = "python";
+                Args = "\"" + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/audioserve.py" + "\""; //forward slash!
             }
             System.Diagnostics.ProcessStartInfo StartInfo = new System.Diagnostics.ProcessStartInfo()
             {
-                Arguments = "\"" + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\audioserve.py" + "\"",
+                Arguments = Args,
                 FileName = FileName,
             };
             System.Diagnostics.Process.Start(StartInfo);
