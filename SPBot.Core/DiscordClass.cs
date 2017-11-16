@@ -52,9 +52,9 @@ namespace SPBot.Core
 
         private async Task DoGuildJoining(SocketGuild guild)
         {
+            Console.WriteLine("Connected to: " + guild);
             var me = guild.GetUser(Client.CurrentUser.Id);
             await me.ModifyAsync(x => x.Nickname = "FelixBot");
-            Console.WriteLine("Connected to: " + guild);
         }
 
         private void TimerCallback(object obj)
