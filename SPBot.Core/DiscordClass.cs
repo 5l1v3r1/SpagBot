@@ -38,8 +38,8 @@ namespace SPBot.Core
             }
             Client.MessageReceived += Client_MessageReceived;
             Client.Connected += Client_Connected;
-            Client.GuildAvailable += async (guild) => Console.WriteLine(guild.Name);
-            Client.JoinedGuild += async (guild) => Console.WriteLine(guild.Name);
+            Client.GuildAvailable += async (guild) => await DoGuildJoining(guild);
+            Client.JoinedGuild += async (guild) => await DoGuildJoining(guild);
             System.Threading.Timer RoomTimer = new System.Threading.Timer(TimerCallback, null, 0, 60000);
             Console.CancelKeyPress += async (s, ev) => { await Client.LogoutAsync();
             };
@@ -48,6 +48,13 @@ namespace SPBot.Core
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
             await Task.Delay(-1);
+        }
+
+        private async Task DoGuildJoining(SocketGuild guild)
+        {
+            var me = guild.GetUser(Client.CurrentUser.Id);
+            await me.ModifyAsync(x => x.Nickname = "FelixBot");
+            Console.WriteLine("Connected to: " + guild);
         }
 
         private void TimerCallback(object obj)
