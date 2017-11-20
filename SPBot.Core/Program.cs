@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Discord;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,8 +34,10 @@ namespace SPBot.Core
         private Program()
         {
             var DictionaryObject = new Dictionary<Discord.IVoiceChannel, AudioPlayer>();
+            Dictionary<IGuild, ITextChannel> GuildBotchannels = new Dictionary<IGuild, ITextChannel>();
             Map = new ServiceCollection()
             .AddSingleton(DictionaryObject)
+            .AddSingleton(GuildBotchannels)
             .BuildServiceProvider();
             DiscordClass = new DiscordClass(Map); 
             DiscordClass.MainAsync().GetAwaiter().GetResult();

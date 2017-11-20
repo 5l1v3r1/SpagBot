@@ -15,8 +15,7 @@ namespace SPBot.Core
         private CommandService Commands;
         private IServiceProvider Map;
         private Dictionary<IVoiceChannel, AudioPlayer> ChannelTrackList;
-        private List<SocketGuild> ConnectedGuilds;
-
+        private Dictionary<IGuild, ITextChannel> GuildBotchannels;
 
         public DiscordClass(IServiceProvider MyMap)
         {
@@ -24,6 +23,7 @@ namespace SPBot.Core
             Commands = new CommandService();
             Map = MyMap;
             ChannelTrackList = (Dictionary<IVoiceChannel, AudioPlayer>)MyMap.GetService(typeof(Dictionary<IVoiceChannel, AudioPlayer>));
+            GuildBotchannels = (Dictionary<IGuild, ITextChannel>)MyMap.GetService(typeof(Dictionary<IGuild, ITextChannel>));
         }
 
         public async Task MainAsync()
@@ -38,23 +38,36 @@ namespace SPBot.Core
             }
             Client.MessageReceived += Client_MessageReceived;
             Client.Connected += Client_Connected;
+            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             Client.GuildAvailable += async (guild) => await DoGuildJoining(guild);
             Client.JoinedGuild += async (guild) => await DoGuildJoining(guild);
-            System.Threading.Timer RoomTimer = new System.Threading.Timer(TimerCallback, null, 0, 60000);
-            Console.CancelKeyPress += async (s, ev) => { await Client.LogoutAsync();
-            };
             await Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
             string token = System.IO.File.ReadAllText("token.txt");
+            Console.WriteLine("Token Obtained Successfully, Attempting To Log In.");
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
+            Console.WriteLine("Successfully Logged In.");
             await Task.Delay(-1);
         }
 
         private async Task DoGuildJoining(SocketGuild guild)
         {
-            Console.WriteLine("Connected to: " + guild);
-            var me = guild.GetUser(Client.CurrentUser.Id);
-            await me.ModifyAsync(x => x.Nickname = "FelixBot");
+            if (GuildBotchannels.Keys.Contains(guild) == false)
+            {
+                var TxtChan = guild.TextChannels.FirstOrDefault(x => x.Name.ToLower().Contains("bot") || x.Name.ToLower().Contains("control"));
+                if (TxtChan != null)
+                {
+                    GuildBotchannels.Add(guild, TxtChan);
+                }
+                else
+                {
+                    GuildBotchannels.Add(guild, guild.TextChannels.First());
+                    await guild.TextChannels.First().SendMessageAsync("Nyaa~~ I'll be using this channel to listen to your commands!");
+                }
+                Console.WriteLine("Connected to: " + guild);
+                var me = guild.GetUser(Client.CurrentUser.Id);
+                await me.ModifyAsync(x => x.Nickname = "FelixBot");
+            }
         }
 
         private void TimerCallback(object obj)
@@ -82,9 +95,13 @@ namespace SPBot.Core
             x.SendMessageAsync(Message);
         }
 
-        private void CurrentDomain_ProcessExit(object sender, EventArgs e)
+        private async void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
-            Client.LogoutAsync();
+            foreach(ITextChannel Channel in GuildBotchannels.Values)
+            {
+                await Channel.SendMessageAsync("I'm leaving! Byee!");
+            }
+            await Client.LogoutAsync();
         }
 
         private async Task Client_Connected()
@@ -92,6 +109,7 @@ namespace SPBot.Core
             if(Statics.HasBooted == false)
             {
                 Console.WriteLine("Connected to discord as: " + Client.CurrentUser.Username);
+                System.Threading.Timer RoomTimer = new System.Threading.Timer(TimerCallback, null, 0, 60000);
                 Statics.HasBooted = true;
             }
             await Client.SetGameAsync("+help");
@@ -100,8 +118,9 @@ namespace SPBot.Core
         private async Task Client_MessageReceived(SocketMessage arg)
         {
             var message = arg as SocketUserMessage;
+            var Msg2 = arg.Channel as SocketGuildChannel;
             int prefix = 0;
-            if (message.HasCharPrefix('+', ref prefix) && (message.Channel.Name.ToLower().Contains("bot") || message.Channel.Name.ToLower().Contains("control")))
+            if (message.HasCharPrefix('+', ref prefix) && GuildBotchannels[Msg2.Guild]?.Id == message.Channel.Id)
             {
                 var context = new CommandContext(Client, message);
                 var result = await Commands.ExecuteAsync(context, prefix, Map);
@@ -118,29 +137,61 @@ namespace SPBot.Core
         }
 
         [Command("Dab", RunMode = RunMode.Async)]
-        public async Task Dab()
+        public async Task Dab([Remainder]string Message = "")
         {
-            await Context.Channel.SendMessageAsync("*dabs*");
+            if(Message.Trim() == "")
+            {
+                await Context.Channel.SendMessageAsync("*dabs*");
+            }
+            else if(Message.ToLower().Contains("on"))
+            {
+                var UserContextId = Context.Message.MentionedUserIds.FirstOrDefault();
+                if(UserContextId > 0)
+                {
+                    if (UserContextId == 299586375752089600) UserContextId = Context.User.Id; // don't dab on self
+                    await Context.Channel.SendMessageAsync("*Dabs on " + (await Context.Channel.GetUserAsync(UserContextId)).Mention + "*");
+                }
+                else if(Message.ToLower().Trim() == "on @everyone")
+                {
+                    await Context.Channel.SendMessageAsync("*Dabs on " + Context.Guild.EveryoneRole.Mention + "*");
+                }
+                else
+                {
+                    await Context.Channel.SendMessageAsync("Who am I dabbing on? :thinking:");
+                }
+                
+            }
         }
 
         [Command("Say", RunMode = RunMode.Async)]
         public async Task Say([Remainder]string Message)
         {
-            //IUser Liam = await Context.Channel.GetUserAsync(128875352444370944);
-            //await Context.Channel.SendMessageAsync("This feature doesn't currently work, thanks " + Liam.Mention);
-            //return;
             IUserMessage Mess = await Context.Channel.SendMessageAsync(Message, true);
             await Mess.DeleteAsync();
 
         }
 
         [Command("Play", RunMode = RunMode.Async)]
-        public async Task Play(string Text)
+        public async Task Play([Remainder]string Text)
         {
+            IGuildUser SelectedUser = null;
             IVoiceChannel channel = (Context.Message.Author as IGuildUser).VoiceChannel;
+            if(Context.Message.MentionedUserIds.Count() == 1)
+            {
+                ulong UserID = Context.Message.MentionedUserIds.First();
+                SelectedUser = await Context.Guild.GetUserAsync(UserID);
+                channel = SelectedUser?.VoiceChannel;
+            }
             if (channel == null)
             {
-                await Context.Channel.SendMessageAsync("Please join a voice channel before requesting tracks! :)");
+                if(SelectedUser != null)
+                {
+                    await Context.Channel.SendMessageAsync(SelectedUser.Username + " isn't in a voice channel, baka!");
+                }
+                else
+                {
+                    await Context.Channel.SendMessageAsync("Please join a voice channel before requesting tracks! :)");
+                }
                 return;
             }
             if (ChannelTrackList.Keys.Contains(channel) == false)

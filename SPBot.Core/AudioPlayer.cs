@@ -301,7 +301,7 @@ namespace SPBot.Core
                             CurrentSong = SongName;
                         }
                     }
-                    catch (Exception e)
+                    catch
                     {
                         //RuntimeBinder exception probably :)
                     }
