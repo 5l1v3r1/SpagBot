@@ -3,13 +3,7 @@ A discord bot written in C# with the love and help of Discord.NET
 
 
 ## What is SpagBot?
-Spagbot is a discord bot capable of playing music from YouTube, as well as serving other requests (more to come).
-
-SpagBot currently has 2 versions, a .NET Framework build, which will only run well on Windows, but it also has a version which is build using the .NET Core Framework, which can run well on Mac OSX, Linux and Windows.
-
-## What's the difference?
-
-I have made more progress on the .NET core project as opposed to the .NET framework version, So usage of that is recommended! :)
+Spagbot is a bot built for discord, that allows a guild to play & queue audio from youtube, as well as play livestreams and videos. There are also some other features that guilds may find useful.
 
 ## What's the Python file?
 
