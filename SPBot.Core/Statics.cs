@@ -6,8 +6,6 @@ namespace SPBot.Core
 {
     public class Statics
     {
-        public static bool HasBooted = false;
-
         public static string HelpMessages()
         {
             string Commands = "";
