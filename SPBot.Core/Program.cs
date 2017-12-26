@@ -10,9 +10,6 @@ namespace SPBot.Core
 {
     class Program
     {
-        private ClientConfigClass DiscordClass;
-        private IServiceProvider Map;
-
         static void Main()
         {
             Console.WriteLine("We bootin' up now!");
@@ -43,11 +40,11 @@ namespace SPBot.Core
         {
             var DictionaryObject = new Dictionary<Discord.IVoiceChannel, AudioPlayer>();
             Dictionary<IGuild, ITextChannel> GuildBotchannels = new Dictionary<IGuild, ITextChannel>();
-            Map = new ServiceCollection()
+            var Map = new ServiceCollection()
             .AddSingleton(DictionaryObject)
             .AddSingleton(GuildBotchannels)
             .BuildServiceProvider();
-            DiscordClass = new ClientConfigClass(Map); 
+            var DiscordClass = new ClientConfigClass(Map); 
             DiscordClass.MainAsync().GetAwaiter().GetResult();
         }
 
