@@ -52,7 +52,7 @@ namespace SPBot.Core
                     }
                     else if (Domain.Contains("soundcloud"))
                     {
-                        //gotta use the API or something..
+                        VideoObject = await GetVideoViaTCPAsync(VideoUrl);
                     }
                     else
                     {

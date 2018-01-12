@@ -49,7 +49,7 @@ namespace SPBot.Core
                         int rand = new Random().Next(0, count);
                         var RandomItem = XDoc.Root.Elements("post").ToArray()[rand];
                         string tags = RandomItem.Attribute("tags").Value;
-                        string img = "http:" + RandomItem.Attribute("file_url").Value;
+                        string img = RandomItem.Attribute("file_url").Value;
                         string filename = img.Substring(img.LastIndexOf("/") + 2);
                         await WC.DownloadFileTaskAsync(img, filename);
                         await NSFWChannel.SendFileAsync(filename, tags);
