@@ -56,7 +56,27 @@ namespace SPBot.Core
                     }
                     else
                     {
-                        VideoObject = VideoInfo.CreateCustomVideo(VideoUrl, "Custom Audio by " + Username, VideoInfo.Types.Video);
+                        System.Net.HttpWebRequest WebReq = System.Net.WebRequest.CreateHttp(VideoUrl);
+                        WebReq.Method = "HEAD";
+                        using (var response = await WebReq.GetResponseAsync())
+                        {
+                            try
+                            {
+                                string LocValue = response.Headers["location"];
+                                if (!LocValue.Contains("m3u8") || !LocValue.Contains("mp4"))
+                                {
+                                    retval = "I'm not sure how to process that, " + Username + ".";
+                                }
+                                else
+                                {
+                                    VideoObject = VideoInfo.CreateCustomVideo(LocValue, "Custom Audio by " + Username, VideoInfo.Types.Video);
+                                }
+                            }
+                            catch
+                            {
+                                retval = "I'm not sure how to process that, " + Username + ".";
+                            }
+                        }
                     }
                     if (VideoObject != null)
                     {
