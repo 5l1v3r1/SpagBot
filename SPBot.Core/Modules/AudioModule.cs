@@ -55,9 +55,9 @@ namespace SPBot.Core
             string PlayAudio = await Player.DoPlayAsync(Text, (Context.Message.Author as IGuildUser).Nickname);
             if (PlayAudio != "")
             {
-                if (PlayAudio == "Song download failed :(")
+                if (PlayAudio == "ERROR")
                 {
-                    await Context.Channel.SendMessageAsync(PlayAudio);
+                    await Context.Channel.SendMessageAsync("Unable to process your request, " + (Context.Message.Author as IGuildUser).Nickname + ".");
                     return;
                 }
                 var IsInVoiceChannel = await channel.GetUserAsync(Context.Client.CurrentUser.Id);

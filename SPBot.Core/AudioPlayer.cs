@@ -56,27 +56,20 @@ namespace SPBot.Core
                     }
                     else
                     {
-                        System.Net.HttpWebRequest WebReq = System.Net.WebRequest.CreateHttp(VideoUrl);
-                        WebReq.Method = "HEAD";
-                        using (var response = await WebReq.GetResponseAsync())
+                        try
                         {
-                            try
+                            System.Net.HttpWebRequest WebReq = System.Net.WebRequest.CreateHttp(VideoUrl);
+                            WebReq.Method = "GET";
+                            using (var response = await WebReq.GetResponseAsync())
                             {
-                                string LocValue = response.Headers["location"];
-                                if (!LocValue.Contains("m3u8") || !LocValue.Contains("mp4"))
-                                {
-                                    retval = "I'm not sure how to process that, " + Username + ".";
-                                }
-                                else
+                                string LocValue = response.ResponseUri.ToString();
+                                if (LocValue.Contains("m3u8") || LocValue.Contains("mp4"))
                                 {
                                     VideoObject = VideoInfo.CreateCustomVideo(LocValue, "Custom Audio by " + Username, VideoInfo.Types.Video);
                                 }
                             }
-                            catch
-                            {
-                                retval = "I'm not sure how to process that, " + Username + ".";
-                            }
                         }
+                        catch { }
                     }
                     if (VideoObject != null)
                     {
@@ -93,18 +86,18 @@ namespace SPBot.Core
                     }
                     else
                     {
-                        retval = "Song download failed :(";
+                        retval = "ERROR";
                     }
                 }
                 else
                 {
-                    retval = "No valid URI found :(";
+                    retval = "ERROR";
                 }
 
             }
             else
             {
-                retval = "You want me to play nothing? You can use +skip for that..";
+                retval = "ERROR";
             }
             return retval;
         }
