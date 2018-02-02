@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <None Update="audioserve.py">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="libsodium.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

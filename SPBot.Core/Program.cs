@@ -20,12 +20,19 @@ namespace SPBot.Core
                 Console.ReadLine();
                 return;
             }
-            string FileName = @"C:\Users\Administrator\AppData\Local\Programs\Python\Python36-32\python.exe";
+            string FileName = $@"C:\Users\{Environment.UserName}\AppData\Local\Programs\Python\Python36-32\python.exe";
             string Args = "\"" + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\audioserve.py" + "\"";
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 FileName = "python";
                 Args = "\"" + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/audioserve.py" + "\""; //forward slash!
+            }
+            else
+            {
+                if(!File.Exists(FileName))
+                {
+                    FileName = @"C:\Python27\python.exe"; //make an educated guess
+                }
             }
             System.Diagnostics.ProcessStartInfo StartInfo = new System.Diagnostics.ProcessStartInfo()
             {
