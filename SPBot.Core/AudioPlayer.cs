@@ -31,7 +31,7 @@ namespace SPBot.Core
             FFMPEGProcess = null;
         }
 
-        public async Task<string> DoPlayAsync(string VideoUrl)
+        public async Task<string> DoPlayAsync(string VideoUrl, string Username = "")
         {
             string retval = "";
             VideoInfo VideoObject = null;
@@ -56,7 +56,7 @@ namespace SPBot.Core
                     }
                     else
                     {
-                        retval = "I'm not quite sure how to play from " + Domain + ", sorry.";
+                        VideoObject = VideoInfo.CreateCustomVideo(VideoUrl, "Custom Audio by " + Username, VideoInfo.Types.Video);
                     }
                     if (VideoObject != null)
                     {
@@ -127,7 +127,7 @@ namespace SPBot.Core
                             break;
 
                     }
-                    VideoInfo = new VideoInfo(url, title, type);
+                    VideoInfo = VideoInfo.CreateCustomVideo(url, title, type);
                 }
                 return VideoInfo;
 

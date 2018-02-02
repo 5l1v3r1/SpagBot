@@ -52,7 +52,7 @@ namespace SPBot.Core
                 ChannelTrackList.Add(channel, NewPlayer);
             }
             AudioPlayer Player = ChannelTrackList[channel];
-            string PlayAudio = await Player.DoPlayAsync(Text);
+            string PlayAudio = await Player.DoPlayAsync(Text, (Context.Message.Author as IGuildUser).Nickname);
             if (PlayAudio != "")
             {
                 if (PlayAudio == "Song download failed :(")

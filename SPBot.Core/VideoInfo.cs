@@ -15,13 +15,16 @@ namespace SPBot.Core
             Livestream
         }
 
-        public VideoInfo(string url, string title, Types Type)
+        private VideoInfo(string url, string title, Types Type)
         {
             DownloadUrl = url;
             Title = title;
             VideoType = Type;
         }
 
-
+        public static VideoInfo CreateCustomVideo(string Url, string Title, Types Type)
+        {
+            return new VideoInfo(Url, Title, Type);
+        }
     }
 }
