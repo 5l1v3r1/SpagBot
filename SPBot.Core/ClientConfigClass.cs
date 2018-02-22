@@ -59,7 +59,7 @@ namespace SPBot.Core
                 }
                 Console.WriteLine("Connected to: " + guild);
                 var me = guild.GetUser(_Client.CurrentUser.Id);
-                await me.ModifyAsync(x => x.Nickname = "FelixBot");
+                await me.ModifyAsync(x => x.Nickname = me.Username);
             }
         }
 
