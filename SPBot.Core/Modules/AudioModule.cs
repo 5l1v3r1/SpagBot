@@ -29,6 +29,7 @@ namespace SPBot.Core
                 ulong UserID = Context.Message.MentionedUserIds.First();
                 SelectedUser = await Context.Guild.GetUserAsync(UserID);
                 channel = SelectedUser?.VoiceChannel;
+                Text = Text.Substring(0, Text.LastIndexOf("<"));
             }
             if (channel == null)
             {
