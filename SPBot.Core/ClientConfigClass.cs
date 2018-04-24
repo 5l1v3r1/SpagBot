@@ -38,9 +38,11 @@ namespace SPBot.Core
             await _Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
             string[] tokens = System.IO.File.ReadAllLines("token.txt");
             string token = tokens[0];
+            Console.WriteLine("Token in use: " + token);
             if(tokens.Count() > 1)
             {
                 ytauth = tokens[1];
+                Console.WriteLine("API Token Provided: " + ytauth);
             }
             Console.WriteLine("Token Obtained Successfully, Attempting To Log In.");
             await _Client.LoginAsync(TokenType.Bot, token);
