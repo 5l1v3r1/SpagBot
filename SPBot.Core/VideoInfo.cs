@@ -6,9 +6,9 @@ namespace SPBot.Core
 {
     public class VideoInfo
     {
-        public string DownloadUrl = "";
-        public string Title = "";
-        public Types VideoType;
+        public string DownloadUrl { get; internal set; }
+        public string Title { get; internal set; }
+        public Types VideoType { get; internal set; }
         public enum Types
         {
             Video,

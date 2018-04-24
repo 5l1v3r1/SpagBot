@@ -11,6 +11,8 @@ namespace SPBot.Core
 {
     public class ClientConfigClass
     {
+        public static string ytauth = "";
+
         private DiscordSocketClient _Client;
         private CommandService _Commands;
         private IServiceProvider _Map;
@@ -34,7 +36,12 @@ namespace SPBot.Core
             _Client.GuildAvailable += async (guild) => await DoGuildJoining(guild);
             _Client.JoinedGuild += async (guild) => await DoGuildJoining(guild);
             await _Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
-            string token = System.IO.File.ReadAllText("token.txt");
+            string[] tokens = System.IO.File.ReadAllLines("token.txt");
+            string token = tokens[0];
+            if(tokens.Count() > 1)
+            {
+                ytauth = tokens[1];
+            }
             Console.WriteLine("Token Obtained Successfully, Attempting To Log In.");
             await _Client.LoginAsync(TokenType.Bot, token);
             await _Client.StartAsync();

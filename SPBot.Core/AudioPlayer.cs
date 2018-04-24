@@ -63,13 +63,30 @@ namespace SPBot.Core
                             using (var response = await WebReq.GetResponseAsync())
                             {
                                 string LocValue = response.ResponseUri.ToString();
-                                if (LocValue.Contains("m3u8") || LocValue.Contains("mp4"))
+                                if (LocValue.Contains("m3u8") || LocValue.Contains("mp4") || LocValue.Contains("wav"))
                                 {
                                     VideoObject = VideoInfo.CreateCustomVideo(LocValue, "Custom Audio by " + Username, VideoInfo.Types.Video);
                                 }
                             }
                         }
                         catch { }
+                        finally
+                        {
+                            try
+                            {
+                                System.Net.HttpWebRequest WebReq = System.Net.WebRequest.CreateHttp($"https://www.googleapis.com/youtube/v3/search/?q={System.Web.HttpUtility.UrlEncode(VideoUrl)}&maxResults=25&part=snippet&type=video&key={ClientConfigClass.ytauth}");
+                                var youTubeResponse = await WebReq.GetResponseAsync();
+                                using (System.IO.StreamReader SR = new System.IO.StreamReader(youTubeResponse.GetResponseStream()))
+                                {
+                                    string youtubevalue = await SR.ReadToEndAsync();
+                                    Newtonsoft.Json.Linq.JToken TmpValTok = Newtonsoft.Json.Linq.JToken.Parse(youtubevalue);
+                                    youtubevalue = TmpValTok.SelectToken("items[0].id.videoId").ToString();
+                                    VideoObject = await GetVideoViaTCPAsync($"https://youtube.com/watch?v={youtubevalue}");
+                                }
+                            }
+                            catch(Exception e) { }
+
+                        }
                     }
                     if (VideoObject != null)
                     {
