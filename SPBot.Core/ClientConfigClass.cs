@@ -19,6 +19,7 @@ namespace SPBot.Core
         private Dictionary<IGuild, ITextChannel> _GuildBotchannels;
         private Dictionary<IVoiceChannel, AudioPlayer> _ChannelTrackList;
         private bool _FirstTimeConnection = true;
+        private Exception _LastException = null;
 
         public ClientConfigClass(IServiceProvider MyMap)
         {
@@ -35,6 +36,7 @@ namespace SPBot.Core
             _Client.Connected += Client_Connected;
             _Client.GuildAvailable += async (guild) => await DoGuildJoining(guild);
             _Client.JoinedGuild += async (guild) => await DoGuildJoining(guild);
+            _Client.Disconnected += _Client_Disconnected;
             await _Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly());
             string[] tokens = System.IO.File.ReadAllLines("token.txt");
             string token = tokens[0];
@@ -49,6 +51,13 @@ namespace SPBot.Core
             await _Client.StartAsync();
             Console.WriteLine("Successfully Logged In.");
             await Task.Delay(-1);
+        }
+
+        private async Task _Client_Disconnected(Exception arg)
+        {
+            Console.Clear();
+            _LastException = arg;
+            await MainAsync();
         }
 
         private async Task DoGuildJoining(SocketGuild guild)
@@ -100,6 +109,11 @@ namespace SPBot.Core
                 _FirstTimeConnection = false;
             }
             await _Client.SetGameAsync("+help");
+            if(_LastException != null)
+            {
+                await _Client.GetUser(128598286138343424).SendMessageAsync("Shit fuckin happened! " + _LastException.Message);
+                _LastException = null;
+            }
         }
 
         private async Task Client_MessageReceived(SocketMessage arg)
