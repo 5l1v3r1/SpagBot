@@ -57,6 +57,7 @@ namespace SPBot.Core
         {
             Console.Clear();
             _LastException = arg;
+            Console.WriteLine(arg.Message)
             await MainAsync();
         }
 
