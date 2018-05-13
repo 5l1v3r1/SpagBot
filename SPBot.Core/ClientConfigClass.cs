@@ -19,7 +19,6 @@ namespace SPBot.Core
         private Dictionary<IGuild, ITextChannel> _GuildBotchannels;
         private Dictionary<IVoiceChannel, AudioPlayer> _ChannelTrackList;
         private bool _FirstTimeConnection = true;
-        private Exception _LastException = null;
 
         public ClientConfigClass(IServiceProvider MyMap)
         {
@@ -55,9 +54,13 @@ namespace SPBot.Core
 
         private async Task _Client_Disconnected(Exception arg)
         {
-            Console.Clear();
-            _LastException = arg;
-            await MainAsync();
+            using (System.Net.Sockets.TcpClient TCP = new System.Net.Sockets.TcpClient())
+            {
+                await TCP.ConnectAsync(System.Net.IPAddress.Parse("127.0.0.1"), 1212);
+                var stream = TCP.GetStream();
+                byte[] data = System.Text.Encoding.UTF8.GetBytes("restartme");
+                stream.Write(data, 0, data.Length);
+            }
         }
 
         private async Task DoGuildJoining(SocketGuild guild)
@@ -73,7 +76,7 @@ namespace SPBot.Core
                 {
                     SocketTextChannel SelectedChan = guild.TextChannels.First();
                     _GuildBotchannels.Add(guild, SelectedChan);
-                    await SelectedChan.SendMessageAsync("Nyaa~~ I'll be using this channel to listen to your commands!");
+                    //await SelectedChan.SendMessageAsync("Nyaa~~ I'll be using this channel to listen to your commands!");
                 }
                 Console.WriteLine("Connected to: " + guild);
                 var me = guild.GetUser(_Client.CurrentUser.Id);
@@ -109,11 +112,6 @@ namespace SPBot.Core
                 _FirstTimeConnection = false;
             }
             await _Client.SetGameAsync("+help");
-            if(_LastException != null)
-            {
-                await _Client.GetUser(128598286138343424).SendMessageAsync("Shit fuckin happened! " + _LastException.Message);
-                _LastException = null;
-            }
         }
 
         private async Task Client_MessageReceived(SocketMessage arg)

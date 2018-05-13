@@ -1,4 +1,4 @@
-import io, sys, socket, time, youtube_dl, json
+import io, sys, socket, time, youtube_dl, json, subprocess
 
 def GetYoutubeLink(value):
     ydl = youtube_dl.YoutubeDL({
@@ -24,6 +24,10 @@ def GetYoutubeLink(value):
         print(err.args[0])
     return json.dumps(output)
 
+def RestartSpagbot():
+    subprocess.call("~/home/ubuntu/run.sh", shell=True)
+    sys.exit() #kill process so .NET can spawn another one
+
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 1212
@@ -38,6 +42,10 @@ while 1:
     print ('Connection Engaged', addr)
     data = conn.recv(BUFFER_SIZE)
     if not data: break
-    url = GetYoutubeLink(data.decode("utf-8"))
-    conn.send(url.encode())
-    conn.close()
+    datadecoded = data.decode("utf-8")
+    if datadecoded == 'restartme':
+        RestartSpagbot()
+    else:
+        url = GetYoutubeLink(datadecoded)
+        conn.send(url.encode())
+        conn.close()
