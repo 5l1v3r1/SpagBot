@@ -25,7 +25,7 @@ def GetYoutubeLink(value):
     return json.dumps(output)
 
 def RestartSpagbot():
-    subprocess.call("~/home/ubuntu/run.sh", shell=True)
+    subprocess.call("~/run.sh", shell=True)
     sys.exit() #kill process so .NET can spawn another one
 
 
