@@ -11,6 +11,4 @@ The Python file is my way of making sure I don't need libraries in .NET that wor
 
 ## Can I use your bot in my Discord?
 
-You sure can! When I can get the url required for you to add it to your room :)
-
-[Link to invite to your discord!](https://discordapp.com/oauth2/authorize?&client_id=299586375752089600&scope=bot&permissions=0)
+I personally no longer host my bot because it's "not needed" because APPARENTLY discords spotify share feature is somehow better. I'll probably host it again after i've finished being salty about this.
